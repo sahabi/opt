@@ -45,13 +45,13 @@ class Env(object):
         self.counter = 0
         # Obstacle definitions
         #obs1 = obstacle(130,150,120,420)
-        obs1 = obstacle(40,60,40,420)
-        obs3 = obstacle(430,450,40,420)
+        obs1 = obstacle(0,20,10,450)
+        obs3 = obstacle(460,480,10,450)
         obs2 = make_horizontal_wall(obs1,obs3,'top')
         obs4 = make_horizontal_wall(obs1,obs3,'bot')
 
-        obs5 = obstacle(120,140,120,340)
-        obs7 = obstacle(350,370,120,340)
+        obs5 = obstacle(140,160,140,320)
+        obs7 = obstacle(330,350,140,320)
         obs6 = make_horizontal_wall(obs5,obs7,'top')
         obs8 = make_horizontal_wall(obs5,obs7,'bot')  
         self.OBSTACLES = [obs1,obs2,obs3,obs4,obs5,obs6,obs7,obs8] 
@@ -75,11 +75,11 @@ class Env(object):
                     self.obstaclePixels[i][j] = True
         self.CRASH_COST = 1
         self.GOAL_LINE_REWARD = 1
-        self.TRAIN_EVERY_NTH_STEP = 10
+        self.TRAIN_EVERY_NTH_STEP = 6
         self.currentPos = (100.0,100.0)
         self.currentDir = random.random()*math.pi*2
         self.currentSpeedPerStep = 1.0
-        self.currentRotationPerStep = 0.04
+        self.currentRotationPerStep = 0.50
         # There are multiple view of the window. Here, we store the current state
         self.displayBufferEmpty = True
         self.isLearning = True
@@ -194,7 +194,7 @@ class Env(object):
         
 
         if self.viz:
-            rand_x = 100
+            rand_x = 80
             rand_y = 400
             self.currentDir = math.pi
 
@@ -202,7 +202,7 @@ class Env(object):
         self.currentPos = (rand_x, rand_y)
         
         self.currentSpeedPerStep = 1.0
-        self.currentRotationPerStep = 0.04
+        self.currentRotationPerStep = 0.08
         self.iteration += 1
         if pygame.display.get_active() and self.viz:
             color = (255*0/8.0,0,0)
@@ -307,6 +307,8 @@ class Env(object):
         if not self.inside(self.currentPos):
             done = True
             R += 0
+            print 'Accident!',[self.currentPos[0], self.currentPos[1],self.currentDir]
+            sleep(2)
         elif((self.currentPos[1]>self.YSIZE/2) and (self.currentPos[0]<self.XSIZE/2) and (stepStartingPos[0]>self.XSIZE/2)):
             R += 1
             done = False
@@ -352,6 +354,8 @@ class Env(object):
 
         if self.counter >= 1400:
             done = True
+            print 'time out!'
+            sleep(2)
 
         else:
             self.counter += 1
@@ -360,6 +364,7 @@ class Env(object):
         if pygame.display.get_active():        
             self.screen.blit(self.screenBuffer, (0, 0))
             pygame.display.flip()
+        #print self.currentDir
         return (S_dash, R, done, {'info':'data'})
 
     def close(self):

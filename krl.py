@@ -7,11 +7,11 @@ from rl.agents.dqn import DQNAgent
 from rl.policy import BoltzmannQPolicy
 from rl.memory import SequentialMemory
 from datetime import datetime
-from safelearn import Shield
+from safelearn2 import Shield
 
 shield = Shield()
 
-ENV_NAME = 'Car_RL4'
+ENV_NAME = 'Car_RL4_noshield'
 
 steps = 5000
 # Get the environment and extract the number of actions.
@@ -40,7 +40,7 @@ print "model initiated"
 memory = SequentialMemory(limit=500000, window_length=1)
 policy = BoltzmannQPolicy()
 dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=10,
-               target_model_update=1e-2, policy=policy,shield=shield)
+               target_model_update=1e-2, policy=policy,shield=None)
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 
 # Okay, now it's time to learn something! We visualize the training here for show, but this
@@ -51,15 +51,16 @@ score = 0
 fscore = 0
 counter = 0
 start=datetime.now()
+#env.render()
 while fscore <= 28000.0:
 	counter += 1
 	print 'fitting...'
-	train_history = dqn.fit(env, nb_steps=steps, visualize=False, verbose=1)
-	print 'done fitting'
+	train_history = dqn.fit(env, nb_steps=steps, visualize=False, verbose=0)
+	print 'testing...'
 	# After training is done, we save the final weights.
 	env.render()
 	# Finally, evaluate our algorithm for 5 episodes.
-	test_history = dqn.test(env, nb_episodes=1, visualize=True, verbose=1)
+	test_history = dqn.test(env, nb_episodes=1, visualize=True, verbose=0)
 	score = np.mean(test_history.history['episode_reward'])
 	if score > 28000:
 		end = datetime.now()

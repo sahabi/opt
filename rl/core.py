@@ -4,8 +4,8 @@ import sys
 import numpy as np
 from keras.callbacks import History
 from rl.callbacks import TestLogger, TrainEpisodeLogger, TrainIntervalLogger, Visualizer, CallbackList
-
-
+from time import sleep
+import math
 def to_int(x):
     x__,_x_,__x = x
     return 4*x__+2*_x_+1*__x
@@ -16,8 +16,111 @@ def to_bin(x):
     x = [0 for s in range(3-len(x))] + x
     return x
 
+def facing_up(dr):
+    if math.pi/2<=dr<=((math.pi/2)+math.pi):
+        return True
+    else:
+        return False
+
+def facing_bot(dr):
+    if dr<= math.pi/2 or ((math.pi/2)+math.pi)<=dr:
+        return True
+    else:
+        return False
+
+def facing_right(dr):
+    if 0<=dr<=math.pi:
+        return True
+    else:
+        return False
+
+def is_top(x,y):
+    return 40<=y<=65 or (360<=y<=385 and 140<=x<=350)
+def is_bot(x,y):
+    return y>=395 or (75<=y<=100 and 140<=x<=350)
+def is_right(x,y):
+    return 405<=x<=430 or (95<=x<=120 and 100<=y<=360)
+def is_left(x,y):
+    return x<=85 or 370<=x<=395
+
 def get_input(obs):
-    return (0,0,0)
+    XSIZE=480.
+    YSIZE=480.
+    x = obs[0]*XSIZE
+    y = obs[1]*YSIZE
+    if obs[3]>=0:
+        dr = math.asin(obs[2])/(0.25*math.pi)
+        if obs[2] <= 0:
+            dr = 6.21
+    else:
+        dr = 2+math.acos(obs[2])/(0.25*math.pi)
+    #print x,y,dr
+
+    if x<=80 and y<=60: #top and left, right for facing up and down for facing left
+        if facing_up(dr):
+            inp = (0,1,0,1)
+            info = "top left facing up"
+        else:
+            inp = (1,1,0,1) 
+            info = "top left"       
+
+    elif x<=80 and y>=405: #bot and left, right for facing bot, and up for facing left
+        if facing_bot(dr):
+            inp = (0,1,0,1)
+            info = "bot left facing bot" 
+        else:
+            inp = (0,1,1,0)   
+            info = "bot left" 
+
+    elif 420<=x and y<=60: #top and right -down allowed for facing right, left for facing up
+        if facing_right(dr):
+            inp = (1,1,0,1)
+            info = "top right facing right" 
+        else:
+            inp = (0,1,1,1)  
+            info = "top right"
+
+    elif 420<=x and y>=390: #bot and right -up allowed for facing right, left for facing bot
+        if facing_bot(dr):
+            inp = (0,1,1,1)
+            info = "bot right facing bot"
+        else:
+            inp = (0,1,1,0)  
+            info = "bot right"
+
+    elif x<=80 or (350<=x<=395 and 90<=y<=370): #left
+        if facing_up(dr):
+            inp = (1,0,1,0)
+            info = "left facing up"
+        else:
+            inp = (0,0,1,0)
+            info = "left"
+    elif 420<=x or (90<=x<=140 and 90<=y<=370): #right
+        if facing_up(dr):
+            inp = (0,0,0,1)
+            info = 'right facing up'
+        else:
+            inp = (1,0,0,1)
+            info = 'right'
+    elif y>=405 or (70<=y<=140 and 120<=x<=370): #bottom
+        if facing_right(dr):
+            inp = (0,0,1,1)
+            info = 'bottom facing right'
+        else:
+            inp = (1,0,1,1)
+            info = 'bottom'
+    elif y<=60 or (350<=y<=390 and 120<=x<=370): #top
+        if facing_right(dr):
+            inp = (0,1,0,0)
+            info = 'top facing right'
+        else:
+            inp = (1,1,0,0)
+            info = 'top'
+    else:
+        inp = (0,0,0,0)
+        info = 'mid'
+    #print info
+    return inp
 
 class Agent(object):
     def __init__(self, processor=None, shield=None):
@@ -121,11 +224,16 @@ class Agent(object):
                 callbacks.on_step_begin(episode_step)
                 # This is were all of the work happens. We first perceive and compute the action
                 # (forward step) and then use the reward to improve (backward step).
-                print observation
-                action = self.forward(observation)
-                inp = get_input(observation)
-                action_bin = to_bin(action)
-                action = to_int(self.shield.move(inp[0],inp[1],inp[2],action_bin[0],action_bin[1],action_bin[2]))
+                #print observation
+                oldaction = self.forward(observation)
+                if self.shield is not None:
+                    inp = get_input(observation)
+                    action_bin = to_bin(oldaction)
+                    #sleep(0.01)
+                    action = to_int(self.shield.move(inp[0],inp[1],inp[2],inp[3],action_bin[0],action_bin[1],action_bin[2]))
+                else:
+                    action = oldaction
+                #print action, oldaction
                 if self.processor is not None:
                     action = self.processor.process_action(action)
                 reward = 0.
