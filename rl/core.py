@@ -269,6 +269,19 @@ class Agent(object):
                     'episode': episode,
                     'info': accumulated_info,
                 }
+                oldstep_logs = {
+                    'action': oldaction,
+                    'observation': observation,
+                    'reward': -1,
+                    'metrics': metrics,
+                    'episode': episode,
+                    'info': accumulated_info,
+                }
+                # if correction:
+                #     callbacks.on_step_end(episode_step, oldstep_logs)
+                #     episode_step += 1
+                #     self.step += 1
+
                 callbacks.on_step_end(episode_step, step_logs)
                 episode_step += 1
                 self.step += 1
@@ -384,7 +397,14 @@ class Agent(object):
             while not done:
                 callbacks.on_step_begin(episode_step)
 
-                action = self.forward(observation)
+                oldaction = self.forward(observation)
+                if self.shield is not None:
+                    inp = get_input(observation)
+                    action_bin = to_bin(oldaction)
+                    #sleep(0.01)
+                    action = to_int(self.shield.move(inp[0],inp[1],inp[2],inp[3],action_bin[0],action_bin[1],action_bin[2]))
+                else:
+                    action = oldaction
                 if self.processor is not None:
                     action = self.processor.process_action(action)
                 reward = 0.
@@ -392,6 +412,9 @@ class Agent(object):
                 for _ in range(action_repetition):
                     callbacks.on_action_begin(action)
                     observation, r, d, info = env.step(action)
+
+
+
                     observation = deepcopy(observation)
                     if self.processor is not None:
                         observation, r, d, info = self.processor.process_step(observation, r, d, info)

@@ -22,11 +22,11 @@ nb_actions = env.action_space.n
 # Next, we build a very simple model.
 model = Sequential()
 model.add(Flatten(input_shape=(1,) + env.observation_space.shape))
-model.add(Dense(16))
+model.add(Dense(20))
 model.add(Activation('relu'))
-model.add(Dense(16))
+model.add(Dense(20))
 model.add(Activation('relu'))
-model.add(Dense(16))
+model.add(Dense(20))
 model.add(Activation('relu'))
 # model.add(Dense(16))
 # model.add(Activation('relu'))
@@ -40,7 +40,7 @@ print "model initiated"
 memory = SequentialMemory(limit=500000, window_length=1)
 policy = BoltzmannQPolicy()
 dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=10,
-               target_model_update=1e-2, policy=policy,shield=None)
+               target_model_update=1e-2, policy=policy,shield=shield)
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 
 # Okay, now it's time to learn something! We visualize the training here for show, but this
@@ -51,7 +51,7 @@ score = 0
 fscore = 0
 counter = 0
 start=datetime.now()
-#env.render()
+env.render()
 while fscore <= 28000.0:
 	counter += 1
 	print 'fitting...'
@@ -62,13 +62,15 @@ while fscore <= 28000.0:
 	# Finally, evaluate our algorithm for 5 episodes.
 	test_history = dqn.test(env, nb_episodes=1, visualize=True, verbose=0)
 	score = np.mean(test_history.history['episode_reward'])
+	print score
 	if score > 28000:
 		end = datetime.now()
 		test_history = dqn.test(env, nb_episodes=1, visualize=True).history['episode_reward']
 		fscore = np.mean(test_history)
+		print score
 		dqn.save_weights('{}_weights.h5f'.format(ENV_NAME), overwrite=True)
 	else:
 		fscore = 0
-	env.render(mode=False)
+	#env.render(mode=False)
 
 print('It took {} steps and {} seconds'.format(counter*steps,end-start))
