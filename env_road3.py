@@ -43,6 +43,7 @@ class Env(object):
         self.NOFPIXELSPLITS = 1
         self.viz = viz
         self.counter = 0
+        self.accidents = 0
         # Obstacle definitions
         #obs1 = obstacle(130,150,120,420)
         obs1 = obstacle(0,20,10,450)
@@ -106,18 +107,20 @@ class Env(object):
                     pixels.append((float(x)*self.MAGNIFY/self.XSIZE,float(y)*self.MAGNIFY/self.YSIZE))
         random.shuffle(pixels)
 
-        for i in range(0,self.NOFPIXELSPLITS):
-            thisChunk = int(len(pixels)/(self.NOFPIXELSPLITS-i))
-            for j in range(0,thisChunk):
-                for k in range(0,8):
-                    a = np.array([pixels[j][0],pixels[j][1],math.sin(k*0.25*math.pi),math.cos(k*0.25*math.pi)])
-                    #a = np.array([pixels[j][0],pixels[j][1]])
-                    b = self.allPixelsDS[k][i]
-                    if b.shape[0] == 0:
-                        self.allPixelsDS[k][i] = a
-                    else:
-                        self.allPixelsDS[k][i] = np.vstack((a,b))
-            pixels = pixels[thisChunk:]
+
+        if self.viz:
+            for i in range(0,self.NOFPIXELSPLITS):
+                thisChunk = int(len(pixels)/(self.NOFPIXELSPLITS-i))
+                for j in range(0,thisChunk):
+                    for k in range(0,8):
+                        a = np.array([pixels[j][0],pixels[j][1],math.sin(k*0.25*math.pi),math.cos(k*0.25*math.pi)])
+                        #a = np.array([pixels[j][0],pixels[j][1]])
+                        b = self.allPixelsDS[k][i]
+                        if b.shape[0] == 0:
+                            self.allPixelsDS[k][i] = a
+                        else:
+                            self.allPixelsDS[k][i] = np.vstack((a,b))
+                pixels = pixels[thisChunk:]
         for obs in self.OBSTACLES:
             for x in range(obs.xmin,obs.xmax):
                 for y in range(obs.ymin,obs.ymax):
@@ -303,11 +306,11 @@ class Env(object):
         # if ((441>self.currentPos[1]>349) and (239<self.currentPos[0]<261)):
         #     R += 1
         #     done = True
-        #     print('GOAL!!!!!!!!!!!!!')
         if not self.inside(self.currentPos):
             done = True
             R += 0
-            print 'Accident!',[self.currentPos[0], self.currentPos[1],self.currentDir]
+            # print 'Accident!',[self.currentPos[0], self.currentPos[1],self.currentDir]
+            self.accidents += 1
             sleep(2)
         elif((self.currentPos[1]>self.YSIZE/2) and (self.currentPos[0]<self.XSIZE/2) and (stepStartingPos[0]>self.XSIZE/2)):
             R += 1
@@ -354,7 +357,6 @@ class Env(object):
 
         if self.counter >= 1400:
             done = True
-            print 'time out!'
             sleep(2)
 
         else:
