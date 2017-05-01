@@ -122,12 +122,94 @@ def get_input(obs):
     #print info
     return inp
 
+
+def get_input_maze(obs):
+    XSIZE=960.
+    YSIZE=960.
+    buf = 40
+    x = obs[0]*XSIZE
+    y = obs[1]*YSIZE
+    if obs[3]>=0:
+        dr = math.asin(obs[2])/(0.25*math.pi)
+        if obs[2] <= 0:
+            dr = 6.21
+    else:
+        dr = 2+math.acos(obs[2])/(0.25*math.pi)
+    #print x,y,dr
+
+    if x<=80 and y<=60: #top and left, right for facing up and down for facing left
+        if facing_up(dr):
+            inp = (0,1,0,1)
+            info = "top left facing up"
+        else:
+            inp = (1,1,0,1) 
+            info = "top left"       
+
+    elif x<=80 and y>=YSIZE-75: #bot and left, right for facing bot, and up for facing left
+        if facing_bot(dr):
+            inp = (0,1,0,1)
+            info = "bot left facing bot" 
+        else:
+            inp = (0,1,1,0)   
+            info = "bot left" 
+
+    elif XSIZE-60<=x and y<=60: #top and right -down allowed for facing right, left for facing up
+        if facing_right(dr):
+            inp = (1,1,0,1)
+            info = "top right facing right" 
+        else:
+            inp = (0,1,1,1)  
+            info = "top right"
+
+    elif XSIZE-60<=x and y>=YSIZE-90: #bot and right -up allowed for facing right, left for facing bot
+        if facing_bot(dr):
+            inp = (0,1,1,1)
+            info = "bot right facing bot"
+        else:
+            inp = (0,1,1,0)  
+            info = "bot right"
+
+    elif x<=20+buf or (830<=x<=830+buf and (140<=y<=480 or 640<=y<=800)) or (320<=x<=320+buf and 140<=y<=640) : #left
+        if facing_up(dr):
+            inp = (1,0,1,0)
+            info = "left facing up"
+        else:
+            inp = (0,0,1,0)
+            info = "left"
+    elif XSIZE-buf<=x or (140-buf<=x<=140 and 140<=y<=800) or (480-buf<=x<=480 and 140<=y<=480): #right
+        if facing_up(dr):
+            inp = (0,0,0,1)
+            info = 'right facing up'
+        else:
+            inp = (1,0,0,1)
+            info = 'right'
+    elif y>=YSIZE-buf or (140-buf<=y<=140 and (140<=x<=320 or 480<=x<=830)) or (640-buf<=y<=640 and 320<=x<=830): #bottom
+        if facing_right(dr):
+            inp = (0,0,1,1)
+            info = 'bottom facing right'
+        else:
+            inp = (1,0,1,1)
+            info = 'bottom'
+    elif y<=buf or (800<=y<=800+buf and 140<=x<=830) or (480<=y<=480+buf and 480<=x<=830): #top
+        if facing_right(dr):
+            inp = (0,1,0,0)
+            info = 'top facing right'
+        else:
+            inp = (1,1,0,0)
+            info = 'top'
+    else:
+        inp = (0,0,0,0)
+        info = 'mid'
+    #print info
+    return inp
+
 class Agent(object):
-    def __init__(self, processor=None, shield=None):
+    def __init__(self, processor=None, shield=None,maze=False):
         self.processor = processor
         self.training = False
         self.step = 0
         self.shield = shield
+        self.maze = maze
 
     def get_config(self):
         return {}
@@ -197,7 +279,10 @@ class Agent(object):
                         else:
                             action = start_step_policy(observation)
                             if self.shield is not None:
-                                inp = get_input(observation)
+                                if self.maze:
+                                    inp = get_input_maze(observation)
+                                else:
+                                    inp = get_input(observation)
                                 action_bin = to_bin(action)
                                 action = self.shield(inp[0],inp[1],inp[2],action_bin[0],action_bin[1],action_bin[2])
                         if self.processor is not None:
@@ -227,7 +312,10 @@ class Agent(object):
                 #print observation
                 oldaction = self.forward(observation)
                 if self.shield is not None:
-                    inp = get_input(observation)
+                    if self.maze:
+                        inp = get_input_maze(observation)
+                    else:
+                        inp = get_input(observation)
                     action_bin = to_bin(oldaction)
                     #sleep(0.01)
                     action = to_int(self.shield.move(inp[0],inp[1],inp[2],inp[3],action_bin[0],action_bin[1],action_bin[2]))
@@ -399,7 +487,10 @@ class Agent(object):
 
                 oldaction = self.forward(observation)
                 if self.shield is not None:
-                    inp = get_input(observation)
+                    if self.maze:
+                        inp = get_input_maze(observation)
+                    else:
+                        inp = get_input(observation)
                     action_bin = to_bin(oldaction)
                     #sleep(0.01)
                     action = to_int(self.shield.move(inp[0],inp[1],inp[2],inp[3],action_bin[0],action_bin[1],action_bin[2]))
