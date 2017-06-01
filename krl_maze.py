@@ -16,6 +16,7 @@ parser.add_argument("-c", "--collect-data", dest="collect_data_file", help="Prov
 parser.add_argument('-s', "--shield_options", dest='shield', help='Indicate whether a shield should be used or not', action='store_true', default=False)
 parser.add_argument('-v', "--viz_options", dest='viz', help='Indicate whether to visualize or not', action='store_true', default=False)
 parser.add_argument('-n', "--negative-reward", dest='neg_reward', help='Indicated whether negative reward should be used for unsafe actions', action='store_true', default=False)
+parser.add_argument('-m', "--manual", dest='manual', help='Indicated whether input is from user or agent', action='store_true', default=False)
 parser.add_argument("--num-steps", dest='num_steps', help='Number of interactions', type=int, default=20)
 
 args = parser.parse_args()

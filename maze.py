@@ -31,7 +31,7 @@ class Space(object):
         self.shape = shape
 
 class Env(object):
-    def __init__(self,viz=False,net=None):
+    def __init__(self,viz=False,net=None, manual=False):
         # CONSTANTS for how large the drawing window is.
         self.XSIZE = 960
         self.YSIZE = 960
@@ -40,6 +40,7 @@ class Env(object):
         self.NOFPIXELSPLITS = 1
         self.viz = viz
         self.counter = 0
+        self.manual = manual
         # Obstacle definitions
         obs1 = obstacle(0,20,10,self.YSIZE-30)
         obs3 = obstacle(self.XSIZE-20,self.XSIZE,10,self.YSIZE-30)
@@ -68,7 +69,7 @@ class Env(object):
                     self.obstaclePixels[i][j] = True
         self.CRASH_COST = 1
         self.GOAL_LINE_REWARD = 1
-        self.TRAIN_EVERY_NTH_STEP = 3
+        self.TRAIN_EVERY_NTH_STEP = 6
         self.currentPos = (100.0,100.0)
         self.currentDir = random.random()*math.pi*2
         self.currentSpeedPerStep = 1.0
@@ -190,9 +191,7 @@ class Env(object):
             rand_x = self.XSIZE - 80
             rand_y = 80
             self.currentDir = 0
-<<<<<<< HEAD
-        
-=======
+
         # while not self.inside([rand_x,rand_y]):
         #     # rand_x = random.random()*self.XSIZE
         #     # rand_y = random.random()*self.YSIZE 
@@ -200,7 +199,6 @@ class Env(object):
         #     rand_y = 400
         # self.currentDir = math.pi*random.random()
 
->>>>>>> 351547b83baab434d2ba81fe77f77daf6f70d094
         if self.viz:
             rand_x = 80
             rand_y = self.YSIZE - 80
@@ -276,7 +274,11 @@ class Env(object):
 
     def step(self, action):
 
-        targetDirDiscrete = action
+        if self.manual:
+            targetDirDiscrete = int(raw_input('What the direction:'))
+        else:
+            targetDirDiscrete = action
+
         targetDir = targetDirDiscrete*math.pi*2/8.0
         stepStartingPos = self.currentPos
 
@@ -302,6 +304,7 @@ class Env(object):
             
             if self.viz:
                 pygame.draw.line(self.screenBuffer,(0,0,255),self.oldPos,self.currentPos,3)
+        
         # hitting the border
         bad = -1*self.CRASH_COST
         good = self.GOAL_LINE_REWARD*1
@@ -337,7 +340,7 @@ class Env(object):
             
             done = False
 
-        if self.counter >= 6000:
+        if self.counter >= 2000:
             done = True
             print 'time out!'
             sleep(2)
