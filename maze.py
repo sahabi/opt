@@ -68,7 +68,7 @@ class Env(object):
                     self.obstaclePixels[i][j] = True
         self.CRASH_COST = 1
         self.GOAL_LINE_REWARD = 1
-        self.TRAIN_EVERY_NTH_STEP = 6
+        self.TRAIN_EVERY_NTH_STEP = 3
         self.currentPos = (100.0,100.0)
         self.currentDir = random.random()*math.pi*2
         self.currentSpeedPerStep = 1.0
@@ -137,11 +137,11 @@ class Env(object):
             return True
 
     def inr5(self,x,y):
-        if self.OBSTACLES[8].xmax <= x <= self.OBSTACLES[10].xmin and self.OBSTACLES[8].ymin <= y <= self.OBSTACLES[8].ymax:
+        if self.OBSTACLES[8].xmax <= x <= self.OBSTACLES[10].xmin and self.OBSTACLES[1].ymin <= y <= self.OBSTACLES[8].ymax:
             return True
 
     def inr6(self,x,y):
-        if self.OBSTACLES[9].xmin <= x <= self.OBSTACLES[9].xmax and self.OBSTACLES[13].ymax <= y <= self.OBSTACLES[9].ymin:
+        if self.OBSTACLES[9].xmin <= x <= self.OBSTACLES[2].xmin and self.OBSTACLES[13].ymax <= y <= self.OBSTACLES[9].ymin:
             return True
 
 
@@ -190,7 +190,17 @@ class Env(object):
             rand_x = self.XSIZE - 80
             rand_y = 80
             self.currentDir = 0
+<<<<<<< HEAD
         
+=======
+        # while not self.inside([rand_x,rand_y]):
+        #     # rand_x = random.random()*self.XSIZE
+        #     # rand_y = random.random()*self.YSIZE 
+        #     rand_x = 100
+        #     rand_y = 400
+        # self.currentDir = math.pi*random.random()
+
+>>>>>>> 351547b83baab434d2ba81fe77f77daf6f70d094
         if self.viz:
             rand_x = 80
             rand_y = self.YSIZE - 80

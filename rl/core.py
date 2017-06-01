@@ -126,7 +126,7 @@ def get_input(obs):
 def get_input_maze(obs):
     XSIZE=960.
     YSIZE=960.
-    buf = 40
+    buf = 50
     x = obs[0]*XSIZE
     y = obs[1]*YSIZE
     if obs[3]>=0:
@@ -183,7 +183,7 @@ def get_input_maze(obs):
         else:
             inp = (1,0,0,1)
             info = 'right'
-    elif y>=YSIZE-buf or (140-buf<=y<=140 and (140<=x<=320 or 480<=x<=830)) or (640-buf<=y<=640 and 320<=x<=830): #bottom
+    elif y>=(YSIZE-30)-buf or (140-buf<=y<=140 and (140<=x<=320 or 480<=x<=830)) or (640-buf<=y<=640 and 320<=x<=830): #bottom
         if facing_right(dr):
             inp = (0,0,1,1)
             info = 'bottom facing right'
@@ -216,13 +216,14 @@ class Agent(object):
 
     def fit(self, env, nb_steps, action_repetition=1, callbacks=None, verbose=1,
             visualize=False, nb_max_start_steps=0, start_step_policy=None, log_interval=10000,
-            nb_max_episode_steps=None):
+            nb_max_episode_steps=None,stepper=False):
         if not self.compiled:
             raise RuntimeError('Your tried to fit your agent but it hasn\'t been compiled yet. Please call `compile()` before `fit()`.')
         if action_repetition < 1:
             raise ValueError('action_repetition must be >= 1, is {}'.format(action_repetition))
 
         self.training = True
+        self.stepper = stepper
 
         callbacks = [] if not callbacks else callbacks[:]
 
@@ -288,6 +289,8 @@ class Agent(object):
                         if self.processor is not None:
                             action = self.processor.process_action(action)
                         callbacks.on_action_begin(action)
+                        if self.stepper:
+                            action = int(raw_input("action?\n"))
                         observation, reward, done, info = env.step(action)
                         observation = deepcopy(observation)
                         if self.processor is not None:
@@ -503,9 +506,6 @@ class Agent(object):
                 for _ in range(action_repetition):
                     callbacks.on_action_begin(action)
                     observation, r, d, info = env.step(action)
-
-
-
                     observation = deepcopy(observation)
                     if self.processor is not None:
                         observation, r, d, info = self.processor.process_step(observation, r, d, info)
