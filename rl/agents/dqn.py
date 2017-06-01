@@ -207,7 +207,7 @@ class DQNAgent(AbstractDQNAgent):
     def update_target_model_hard(self):
         self.target_model.set_weights(self.model.get_weights())
 
-    def forward(self, observation):
+    def forward(self, observation, manual=False):
         # Select an action.
         state = self.memory.get_recent_state(observation)
         q_values = self.compute_q_values(state)
@@ -215,6 +215,8 @@ class DQNAgent(AbstractDQNAgent):
             action = self.policy.select_action(q_values=q_values)
         else:
             action = self.test_policy.select_action(q_values=q_values)
+        if manual:
+            action = int(raw_input("action?\n"))
         if self.processor is not None:
             action = self.processor.process_action(action)
 

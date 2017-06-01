@@ -42,12 +42,15 @@ class Env(object):
         self.counter = 0
         self.manual = manual
         # Obstacle definitions
-        obs1 = obstacle(0,20,10,self.YSIZE-30)
-        obs3 = obstacle(self.XSIZE-20,self.XSIZE,10,self.YSIZE-30)
+        obs1 = obstacle(0,20,10,self.YSIZE-30) #left wall
+        obs3 = obstacle(self.XSIZE-20,self.XSIZE,10,self.YSIZE-30) #right wall
+
         obs2 = make_horizontal_wall(obs1,obs3,'top')
         obs4 = make_horizontal_wall(obs1,obs3,'bot')
+        
         obs5 = obstacle(140,160,140,self.YSIZE-160)
         obs7 = obstacle(self.XSIZE-150,self.XSIZE-130,640,self.YSIZE-160)
+        
         obs8 = make_horizontal_wall(obs5,obs7,'bot') 
         obs9 = obstacle(300,320,140,640)
         obs6 = make_horizontal_wall(obs5,obs9,'top')
@@ -273,7 +276,6 @@ class Env(object):
             ,math.cos(self.currentDir*0.25*math.pi)]) 
 
     def step(self, action):
-
         if self.manual:
             targetDirDiscrete = int(raw_input('What the direction:'))
         else:
@@ -314,7 +316,7 @@ class Env(object):
             done = True
             R += 0
             print 'Accident!'
-            sleep(2)
+            #sleep(2)
 
         elif((self.currentPos[1]>self.YSIZE/2) and (self.currentPos[0]<self.XSIZE/2) and (stepStartingPos[0]>self.XSIZE/2)):
             R += 1
