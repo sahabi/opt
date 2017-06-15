@@ -1,10 +1,7 @@
 import os, pygame, pygame.locals, sys, random, math
 import numpy as np
-#from pybrain.datasets import SupervisedDataSet
 from time import sleep
 from random import choice
-# Helper functions
-
 
 class obstacle(object):
     def __init__(self,xmin,xmax,ymin,ymax):
@@ -34,7 +31,7 @@ class Space(object):
         self.shape = shape
 
 class Env(object):
-    def __init__(self,viz=False,net=None):
+    def __init__(self,viz=False,net=None, manual=False):
         # CONSTANTS for how large the drawing window is.
         self.XSIZE = 960
         self.YSIZE = 960
@@ -43,16 +40,17 @@ class Env(object):
         self.NOFPIXELSPLITS = 1
         self.viz = viz
         self.counter = 0
+        self.manual = manual
         # Obstacle definitions
-        #obs1 = obstacle(130,150,120,420)
-        obs1 = obstacle(0,20,10,self.YSIZE-30)
-        obs3 = obstacle(self.XSIZE-20,self.XSIZE,10,self.YSIZE-30)
+        obs1 = obstacle(0,20,10,self.YSIZE-30) #left wall
+        obs3 = obstacle(self.XSIZE-20,self.XSIZE,10,self.YSIZE-30) #right wall
+
         obs2 = make_horizontal_wall(obs1,obs3,'top')
         obs4 = make_horizontal_wall(obs1,obs3,'bot')
-
+        
         obs5 = obstacle(140,160,140,self.YSIZE-160)
         obs7 = obstacle(self.XSIZE-150,self.XSIZE-130,640,self.YSIZE-160)
-        #obs6 = make_horizontal_wall(obs5,obs7,'top')
+        
         obs8 = make_horizontal_wall(obs5,obs7,'bot') 
         obs9 = obstacle(300,320,140,640)
         obs6 = make_horizontal_wall(obs5,obs9,'top')
@@ -63,14 +61,6 @@ class Env(object):
         obs13 = make_horizontal_wall(obs11,obs12,'top')
         self.OBSTACLES = [obs1,obs2,obs3,obs4,obs5,obs6,obs7,obs8,obs9,obs10,obs11,obs12,obs13,obs14] 
         self.net = net     
-
-        # obs7 = obstacle(330,350,120,350)
-        # obs8 = obstacle(240,260,350,440)
-        
-        # obs3 = make_horizontal_wall(obs2,obs1,'bot')
-        # obs5 = make_horizontal_wall(obs1,obs7,'top')
-        # obs10 = make_horizontal_wall(obs8,obs6,'bot')
-        # obs9 = obstacle(obs8.xmin,obs7.xmax,obs7.ymax,obs7.ymax+20)
 
         self.action_space= Space(8, (0,))
         self.observation_space= Space(0, (4,) )
@@ -91,7 +81,6 @@ class Env(object):
         self.displayBufferEmpty = True
         self.isLearning = True
         # Prepare screen
-        #if self.viz:
         self.screen = pygame.display.set_mode((self.XSIZE,self.YSIZE))
         pygame.display.set_caption('Learning Visualizer')
         self.clock = pygame.time.Clock()
@@ -107,30 +96,30 @@ class Env(object):
         self.allPixelsDS = [[np.array([]) for i in range(0,self.NOFPIXELSPLITS)] for i in range(0,8)]
         pixels = []
 
-        for x in range(0,int(self.XSIZE/self.MAGNIFY)):
-            for y in range(0,int(self.YSIZE/self.MAGNIFY)):
-                if not self.obstaclePixels[x*self.MAGNIFY][y*self.MAGNIFY]:
-                    pixels.append((float(x)*self.MAGNIFY/self.XSIZE,float(y)*self.MAGNIFY/self.YSIZE))
-        random.shuffle(pixels)
+        if self.viz:
 
-        for i in range(0,self.NOFPIXELSPLITS):
-            thisChunk = int(len(pixels)/(self.NOFPIXELSPLITS-i))
-            for j in range(0,thisChunk):
-                for k in range(0,1):
-                    a = np.array([pixels[j][0],pixels[j][1],math.sin(k*0.25*math.pi),math.cos(k*0.25*math.pi)])
-                    #a = np.array([pixels[j][0],pixels[j][1]])
-                    b = self.allPixelsDS[k][i]
-                    if b.shape[0] == 0:
-                        self.allPixelsDS[k][i] = a
-                    else:
-                        self.allPixelsDS[k][i] = np.vstack((a,b))
-            pixels = pixels[thisChunk:]
+            for x in range(0,int(self.XSIZE/self.MAGNIFY)):
+                for y in range(0,int(self.YSIZE/self.MAGNIFY)):
+                    if not self.obstaclePixels[x*self.MAGNIFY][y*self.MAGNIFY]:
+                        pixels.append((float(x)*self.MAGNIFY/self.XSIZE,float(y)*self.MAGNIFY/self.YSIZE))
+            random.shuffle(pixels)
 
+            for i in range(0,self.NOFPIXELSPLITS):
+                thisChunk = int(len(pixels)/(self.NOFPIXELSPLITS-i))
+                for j in range(0,thisChunk):
+                    for k in range(0,1):
+                        a = np.array([pixels[j][0],pixels[j][1],math.sin(k*0.25*math.pi),math.cos(k*0.25*math.pi)])
+                        b = self.allPixelsDS[k][i]
+                        if b.shape[0] == 0:
+                            self.allPixelsDS[k][i] = a
+                        else:
+                            self.allPixelsDS[k][i] = np.vstack((a,b))
+                pixels = pixels[thisChunk:]
 
-        for obs in self.OBSTACLES:
-            for x in range(obs.xmin,obs.xmax):
-                for y in range(obs.ymin,obs.ymax):
-                    self.screenBuffer.set_at((x,y),(0,0,0))
+            for obs in self.OBSTACLES:
+                for x in range(obs.xmin,obs.xmax):
+                    for y in range(obs.ymin,obs.ymax):
+                        self.screenBuffer.set_at((x,y),(0,0,0))
 
         self.displayDirection = 0
         self.iteration = 0
@@ -185,13 +174,10 @@ class Env(object):
             return False
 
     def reset(self,iteration=0,viz=True):
-        #self.currentPos = (400.0,400.0)
         loc = choice([1,2,3,4])
         self.counter = 0
         if self.viz:
             sleep(0.5)
-        # rand_x = random.random()*self.XSIZE
-        # rand_y = random.random()*self.YSIZE
         if loc == 1:
             rand_x = 100
             rand_y = self.YSIZE - 80
@@ -208,6 +194,7 @@ class Env(object):
             rand_x = self.XSIZE - 80
             rand_y = 80
             self.currentDir = 0
+
         # while not self.inside([rand_x,rand_y]):
         #     # rand_x = random.random()*self.XSIZE
         #     # rand_y = random.random()*self.YSIZE 
@@ -252,6 +239,7 @@ class Env(object):
                     color = (40,0,0) #dark red
                 elif arg == 0:
                     color = (0,0,0) #black
+
                 self.predictionBuffer.set_at((int(round(x*self.XSIZE/self.MAGNIFY)), int(round(y*self.YSIZE/self.MAGNIFY))), color)
             # Scale up the "predictionBuffer"
             self.screenBuffer.blit(pygame.transform.smoothscale(self.predictionBuffer, (self.XSIZE, self.YSIZE)),(0,0))
@@ -280,17 +268,19 @@ class Env(object):
                 if (event.type == pygame.locals.KEYDOWN and event.key == pygame.locals.K_l):
                     self.isLearning = not self.isLearning
                 if (event.type == pygame.locals.KEYDOWN and event.key == pygame.locals.K_RIGHT):
-                    #print self.displayDirection
                     self.displayDirection = (self.displayDirection + 1) % 8
                 if (event.type == pygame.locals.KEYDOWN and event.key == pygame.locals.K_LEFT):
                     self.displayDirection = (self.displayDirection + 7) % 8
 
         return np.array([self.currentPos[0]/self.XSIZE, self.currentPos[1]/self.YSIZE, math.sin(self.currentDir*0.25*math.pi)\
-            ,math.cos(self.currentDir*0.25*math.pi)])       
-        #return np.array([self.currentPos[0]/self.XSIZE, self.currentPos[1]/self.YSIZE])   
-    def step(self, action):
+            ,math.cos(self.currentDir*0.25*math.pi)]) 
 
-        targetDirDiscrete = action
+    def step(self, action):
+        if self.manual:
+            targetDirDiscrete = int(raw_input('What the direction:'))
+        else:
+            targetDirDiscrete = action
+
         targetDir = targetDirDiscrete*math.pi*2/8.0
         stepStartingPos = self.currentPos
 
@@ -316,50 +306,21 @@ class Env(object):
             
             if self.viz:
                 pygame.draw.line(self.screenBuffer,(0,0,255),self.oldPos,self.currentPos,3)
+        
         # hitting the border
         bad = -1*self.CRASH_COST
         good = self.GOAL_LINE_REWARD*1
-        #print inside(self.currentPos[0],self.currentPos[1])
         R = 0
 
-        # if ((441>self.currentPos[1]>349) and (239<self.currentPos[0]<261)):
-        #     R += 1
-        #     done = True
-        #     print('GOAL!!!!!!!!!!!!!')
         if not self.inside(self.currentPos):
             done = True
             R += 0
-            print 'Accident!',[self.currentPos[0], self.currentPos[1],self.currentDir]
-            sleep(2)
+            print 'Accident!'
+            #sleep(2)
+
         elif((self.currentPos[1]>self.YSIZE/2) and (self.currentPos[0]<self.XSIZE/2) and (stepStartingPos[0]>self.XSIZE/2)):
             R += 1
             done = False
-        # elif((self.currentPos[1]<self.YSIZE/2) and (self.currentPos[0]>self.XSIZE/2) and (stepStartingPos[0]<self.XSIZE/2)):
-        #     R += 0
-        #     print('checkpoint 1')
-        #     done = False
-        # elif((self.currentPos[1]<self.YSIZE/2) and (stepStartingPos[0]>self.XSIZE/2) and (self.currentPos[0]<self.XSIZE/2)):
-        #     R += 0
-        #     # print('checkpoint 1 bad')
-        #     #R = 0
-        #     done = False
-        # elif ((self.currentPos[1]>self.YSIZE/2) and (self.currentPos[0]>self.XSIZE/2) and (stepStartingPos[1]<self.YSIZE/2)):
-        #     R += 0
-        #     print('checkpoint 2')
-        #     #R = 0
-        #     done = False
-        # going from bottom to top at the second half
-        # elif ((self.currentPos[1]<self.YSIZE/2) and (self.currentPos[0]>self.XSIZE/2) and (stepStartingPos[1]>self.YSIZE/2)):
-        #     R += -1
-        #     print('checkpoint 2 bad')
-        #     #R = 0
-        #     done = True
-        # going from top to bottm at the second half
-        # elif ((self.currentPos[1]>self.YSIZE/2) and (self.currentPos[0]<self.XSIZE/2) and (stepStartingPos[1]<self.YSIZE/2)):
-        #     R += -1
-        #     print('checkpoint 2 bad')
-        #     #R = 0
-        #     done = True
         else:
             if self.inr1(self.currentPos[0],self.currentPos[1]):
                 R += min(10*(stepStartingPos[1] - self.currentPos[1])/ self.YSIZE,20*(stepStartingPos[1] - self.currentPos[1])/ self.YSIZE)
@@ -381,7 +342,7 @@ class Env(object):
             
             done = False
 
-        if self.counter >= 6000:
+        if self.counter >= 2000:
             done = True
             print 'time out!'
             sleep(2)
@@ -393,7 +354,6 @@ class Env(object):
         if pygame.display.get_active():        
             self.screen.blit(self.screenBuffer, (0, 0))
             pygame.display.flip()
-        #print self.currentDir
         return (S_dash, R, done, {'info':'data'})
 
     def close(self):

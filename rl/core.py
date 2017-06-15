@@ -6,6 +6,7 @@ from keras.callbacks import History
 from rl.callbacks import TestLogger, TrainEpisodeLogger, TrainIntervalLogger, Visualizer, CallbackList
 from time import sleep
 import math
+
 def to_int(x):
     x__,_x_,__x = x
     return 4*x__+2*_x_+1*__x
@@ -169,27 +170,34 @@ def get_input_maze(obs):
             inp = (0,1,1,0)  
             info = "bot right"
 
-    elif x<=20+buf or (830<=x<=830+buf and (140<=y<=480 or 640<=y<=800)) or (320<=x<=320+buf and 140<=y<=640) : #left
+    elif x<=20+buf or (830<=x<=830+buf and (120<=y<=5000 or 620<=y<=820)) or (320<=x<=320+buf and 130<=y<=640) : #left
         if facing_up(dr):
             inp = (1,0,1,0)
             info = "left facing up"
         else:
             inp = (0,0,1,0)
             info = "left"
-    elif XSIZE-buf<=x or (140-buf<=x<=140 and 140<=y<=800) or (480-buf<=x<=480 and 140<=y<=480): #right
+
+    elif XSIZE-buf<=x or (140-buf<=x<=140 and 120<=y<=YSIZE-140) or (480-buf<=x<=480 and 140<=y<=480): #right
         if facing_up(dr):
             inp = (0,0,0,1)
             info = 'right facing up'
         else:
             inp = (1,0,0,1)
             info = 'right'
+<<<<<<< HEAD
     elif y>=(YSIZE-30)-buf or (140-buf<=y<=140 and (140<=x<=320 or 480<=x<=830)) or (640-buf<=y<=640 and 320<=x<=830): #bottom
+=======
+
+    elif y>=(YSIZE-30)-buf or (120-buf<=y<=140 and (130<=x<=330 or 470<=x<=840)) or (620-buf<=y<=620 and 320<=x<=830): #bottom
+>>>>>>> 866725ff857dcc90bf4872978aa59d95efa5cd32
         if facing_right(dr):
             inp = (0,0,1,1)
             info = 'bottom facing right'
         else:
             inp = (1,0,1,1)
             info = 'bottom'
+
     elif y<=buf or (800<=y<=800+buf and 140<=x<=830) or (480<=y<=480+buf and 480<=x<=830): #top
         if facing_right(dr):
             inp = (0,1,0,0)
@@ -200,16 +208,17 @@ def get_input_maze(obs):
     else:
         inp = (0,0,0,0)
         info = 'mid'
-    #print info
+    # print info
     return inp
 
 class Agent(object):
-    def __init__(self, processor=None, shield=None,maze=False):
+    def __init__(self, processor=None, shield=None, maze=False, manual=False):
         self.processor = processor
         self.training = False
         self.step = 0
         self.shield = shield
         self.maze = maze
+        self.manual = manual
 
     def get_config(self):
         return {}
@@ -275,7 +284,9 @@ class Agent(object):
                     # This slightly changes the start position between games.
                     nb_random_start_steps = 0 if nb_max_start_steps == 0 else np.random.randint(nb_max_start_steps)
                     for _ in range(nb_random_start_steps):
-                        if start_step_policy is None:
+                        if self.manual:
+                            action = int(raw_input("action?\n"))
+                        elif start_step_policy is None:
                             action = env.action_space.sample()
                         else:
                             action = start_step_policy(observation)
@@ -313,7 +324,12 @@ class Agent(object):
                 # This is were all of the work happens. We first perceive and compute the action
                 # (forward step) and then use the reward to improve (backward step).
                 #print observation
-                oldaction = self.forward(observation)
+                if self.manual:
+                    
+                    oldaction = self.forward(observation, manual=True)
+                else:
+                    oldaction = self.forward(observation,manual=False)
+                    # print oldaction
                 if self.shield is not None:
                     if self.maze:
                         inp = get_input_maze(observation)
